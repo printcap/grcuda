@@ -1,0 +1,19 @@
+pipeline {
+  agent {
+    docker {
+      image 'cuda_jvmci_mx:10.0-ubuntu16.04'
+    }
+  }
+  stages {
+    stage('Build') {
+      steps {
+        sh 'ci/build.sh'
+      }
+    }
+    stage('Test') {
+      steps {
+        sh 'ci/test.sh'
+      }
+    }
+  }
+}
