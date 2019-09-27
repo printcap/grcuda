@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'printcap/cuda_jvmci_mx:10.0_ubuntu16.04'
+      image 'printcap/cuda_jvmci_mx:10.0_ubuntu16_04'
     }
   }
   stages {
