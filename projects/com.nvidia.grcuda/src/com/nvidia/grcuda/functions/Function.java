@@ -73,6 +73,7 @@ public abstract class Function implements TruffleObject {
         try {
             return INTEROP.asInt(number);
         } catch (UnsupportedMessageException e) {
+            CompilerDirectives.transferToInterpreter();
             throw UnsupportedTypeException.create(new Object[]{number}, "expected integer number argument");
         }
     }
@@ -81,12 +82,21 @@ public abstract class Function implements TruffleObject {
         try {
             return INTEROP.asLong(number);
         } catch (UnsupportedMessageException e) {
+            CompilerDirectives.transferToInterpreter();
             throw UnsupportedTypeException.create(new Object[]{number}, message);
         }
     }
 
     protected static long expectLong(Object number) throws UnsupportedTypeException {
         return expectLong(number, "expected long number argument");
+    }
+
+    protected static int expectPositiveInt(Object number) throws UnsupportedTypeException {
+        int value = expectInt(number);
+        if (value < 0) {
+            throw UnsupportedTypeException.create(new Object[]{number}, "expected positive int number argument");
+        }
+        return value;
     }
 
     protected static long expectPositiveLong(Object number) throws UnsupportedTypeException {
@@ -99,6 +109,7 @@ public abstract class Function implements TruffleObject {
 
     protected static void checkArgumentLength(Object[] arguments, int expected) throws ArityException {
         if (arguments.length != expected) {
+            CompilerDirectives.transferToInterpreter();
             throw ArityException.create(expected, arguments.length);
         }
     }

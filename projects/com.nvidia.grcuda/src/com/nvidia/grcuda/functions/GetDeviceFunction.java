@@ -26,46 +26,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda;
+package com.nvidia.grcuda.functions;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.nvidia.grcuda.gpu.CUDARuntime;
+import com.nvidia.grcuda.gpu.Device;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
-public enum ElementType {
-    BYTE(1),
-    CHAR(2),
-    SHORT(2),
-    INT(4),
-    LONG(8),
-    FLOAT(4),
-    DOUBLE(8);
+public class GetDeviceFunction extends Function {
 
-    private final int sizeBytes;
+    private final CUDARuntime runtime;
 
-    ElementType(int sizeBytes) {
-        this.sizeBytes = sizeBytes;
+    public GetDeviceFunction(CUDARuntime runtime) {
+        super("getdevice", "");
+        this.runtime = runtime;
     }
 
-    public int getSizeBytes() {
-        return this.sizeBytes;
-    }
-
-    public static ElementType lookupType(String type) throws TypeException {
-        switch (type) {
-            case "char":
-                return ElementType.BYTE;
-            case "short":
-                return ElementType.SHORT;
-            case "int":
-                return ElementType.INT;
-            case "long":
-                return ElementType.LONG;
-            case "float":
-                return ElementType.FLOAT;
-            case "double":
-                return ElementType.DOUBLE;
-            default:
-                CompilerDirectives.transferToInterpreter();
-                throw new TypeException("invalid type '" + type + "'");
-        }
+    @Override
+    @TruffleBoundary
+    public Object call(Object[] arguments) throws UnsupportedTypeException, ArityException {
+        checkArgumentLength(arguments, 1);
+        int deviceId = expectPositiveInt(arguments[0]);
+        return new Device(deviceId, runtime);
     }
 }

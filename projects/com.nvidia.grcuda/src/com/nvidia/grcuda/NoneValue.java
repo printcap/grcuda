@@ -28,44 +28,44 @@
  */
 package com.nvidia.grcuda;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
-public enum ElementType {
-    BYTE(1),
-    CHAR(2),
-    SHORT(2),
-    INT(4),
-    LONG(8),
-    FLOAT(4),
-    DOUBLE(8);
+/**
+ * None is a singleton object that will always returned of a function or a member returns `void`.
+ *
+ * This is to satisfy the post-condition in the Truffle call contract for invokeMember and execute,
+ * which states the the result type must be either a boxed primitive type or a TruffleObject.
+ *
+ */
+@ExportLibrary(InteropLibrary.class)
+public class NoneValue implements TruffleObject {
 
-    private final int sizeBytes;
+    private static final NoneValue singleton = new NoneValue();
 
-    ElementType(int sizeBytes) {
-        this.sizeBytes = sizeBytes;
+    public static NoneValue get() {
+        return singleton;
     }
 
-    public int getSizeBytes() {
-        return this.sizeBytes;
+    @Override
+    public String toString() {
+        return "NoneValue";
     }
 
-    public static ElementType lookupType(String type) throws TypeException {
-        switch (type) {
-            case "char":
-                return ElementType.BYTE;
-            case "short":
-                return ElementType.SHORT;
-            case "int":
-                return ElementType.INT;
-            case "long":
-                return ElementType.LONG;
-            case "float":
-                return ElementType.FLOAT;
-            case "double":
-                return ElementType.DOUBLE;
-            default:
-                CompilerDirectives.transferToInterpreter();
-                throw new TypeException("invalid type '" + type + "'");
-        }
+    @Override
+    public int hashCode() {
+        return 123456789;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof NoneValue;
+    }
+
+    @ExportMessage
+    public boolean isNull() {
+        return true;
     }
 }
