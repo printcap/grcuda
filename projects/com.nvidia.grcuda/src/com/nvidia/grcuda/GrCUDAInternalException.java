@@ -26,25 +26,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda.functions;
+package com.nvidia.grcuda;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.nodes.Node;
 
-public final class ExternalFunction extends Function {
+public final class GrCUDAInternalException extends RuntimeException implements TruffleException {
+    private static final long serialVersionUID = 8614211550329856579L;
 
-    private final Object externalFunction;
+    private final Node node;
 
-    public ExternalFunction(String name, Object externalFunction) {
-        super(name);
-        this.externalFunction = externalFunction;
+    public GrCUDAInternalException(String message) {
+        this(message, null);
+    }
+
+    public GrCUDAInternalException(String message, Node node) {
+        super(message);
+        this.node = node;
+    }
+
+    public GrCUDAInternalException(InteropException e) {
+        this(e.getMessage());
+    }
+
+    public boolean isInternalError() {
+        return true;
     }
 
     @Override
-    @TruffleBoundary
-    protected Object call(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return INTEROP.execute(externalFunction, arguments);
+    public Node getLocation() {
+        return node;
     }
 }

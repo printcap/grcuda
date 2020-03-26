@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,32 +28,34 @@
  */
 package com.nvidia.grcuda.functions;
 
+import com.nvidia.grcuda.ElementType;
 import com.nvidia.grcuda.gpu.CUDARuntime;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
-public abstract class CUDAFunctionFactory {
+/**
+ * Special curried version of the device array creation function that is specific to a data type.
+ */
+public final class TypedDeviceArrayFunction extends Function {
 
-    private final String name;
-    private final String namespace;
-    private final String nfiSignature;
+    private final CUDARuntime runtime;
+    private final ElementType elementType;
 
-    public CUDAFunctionFactory(String name, String namespace, String nfiSignature) {
-        this.name = name;
-        this.namespace = namespace;
-        this.nfiSignature = nfiSignature;
+    public TypedDeviceArrayFunction(CUDARuntime runtime, ElementType elementType) {
+        super("TypedDeviceArray");
+        this.runtime = runtime;
+        this.elementType = elementType;
     }
 
-    public String getName() {
-        return name;
+    @Override
+    @TruffleBoundary
+    public Object call(Object[] arguments) throws ArityException, UnsupportedTypeException {
+        if (arguments.length < 1) {
+            CompilerDirectives.transferToInterpreter();
+            throw ArityException.create(1, arguments.length);
+        }
+        return DeviceArrayFunction.createArray(arguments, 0, elementType, runtime);
     }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
-    public String getNFISignature() {
-        return nfiSignature;
-    }
-
-    public abstract CUDAFunction makeFunction(CUDARuntime cudaRuntime);
-
 }

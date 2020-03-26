@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,40 +26,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda.functions;
+package com.nvidia.grcuda;
 
-import java.util.HashMap;
-import java.util.Optional;
+import org.graalvm.options.OptionCategory;
+import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.nvidia.grcuda.cublas.CUBLASRegistry;
+import com.nvidia.grcuda.cuml.CUMLRegistry;
+import com.oracle.truffle.api.Option;
 
-public final class FunctionTable {
-
-    private final HashMap<String, Function> functionMap = new HashMap<>();
-
-    public FunctionTable registerFunction(Function function) {
-        String functionName = function.getName();
-        String namespace = function.getNamespace();
-        String key = getKeyFromName(functionName, namespace);
-        if (functionMap.containsKey(key)) {
-            throw new RuntimeException("function '" + namespace + "::" + functionName + "' already exists.");
-        }
-        functionMap.put(key, function);
-        return this;
+@Option.Group(GrCUDALanguage.ID)
+public final class GrCUDAOptions {
+    private GrCUDAOptions() {
+        // no instances
     }
 
-    @TruffleBoundary
-    public Optional<Function> lookupFunction(String functionName, String namespace) {
-        // A TruffleBoundary stops forced-inlining.
-        // Here it is required because of the access to the HashMap, which uses
-        // recursive method calls in the lookup. If the inlining is not stopped, the Graal
-        // would continue infinitely.
-        return Optional.ofNullable(functionMap.get(getKeyFromName(functionName, namespace)));
-    }
+    @Option(category = OptionCategory.USER, help = "Enable cuBLAS support.", stability = OptionStability.STABLE) //
+    public static final OptionKey<Boolean> CuBLASEnabled = new OptionKey<>(true);
 
-    private static String getKeyFromName(String functionName, String namespace) {
-        CompilerAsserts.neverPartOfCompilation();
-        return namespace + "::" + functionName;
-    }
+    @Option(category = OptionCategory.USER, help = "Set the location of the cublas library.", stability = OptionStability.STABLE) //
+    public static final OptionKey<String> CuBLASLibrary = new OptionKey<>(CUBLASRegistry.DEFAULT_LIBRARY);
+
+    @Option(category = OptionCategory.USER, help = "Enable cuML support.", stability = OptionStability.STABLE) //
+    public static final OptionKey<Boolean> CuMLEnabled = new OptionKey<>(true);
+
+    @Option(category = OptionCategory.USER, help = "Set the location of the cuml library.", stability = OptionStability.STABLE) //
+    public static final OptionKey<String> CuMLLibrary = new OptionKey<>(CUMLRegistry.DEFAULT_LIBRARY);
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,30 +25,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda.gpu;
+package com.nvidia.grcuda.functions.map;
 
-import com.oracle.truffle.api.TruffleException;
-import com.oracle.truffle.api.nodes.Node;
+import org.graalvm.collections.EconomicMap;
 
-public class CUDAException extends RuntimeException implements TruffleException {
+import com.nvidia.grcuda.DeviceArray.MemberSet;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
-    private static final long serialVersionUID = 8808625867900726781L;
+@ExportLibrary(InteropLibrary.class)
+public final class ArgumentSet implements TruffleObject {
 
-    public CUDAException(int errorCode, String functionName) {
-        super("CUDA error " + errorCode + " in " + functionName);
+    final EconomicMap<String, Integer> nameList = EconomicMap.create();
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean hasMembers() {
+        return true;
     }
 
-    public CUDAException(int errorCode, String message, String functionName) {
-        super(message + '(' + errorCode + ") in " + functionName);
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    @TruffleBoundary
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        String[] names = new String[nameList.size()];
+        int pos = 0;
+        for (String name : nameList.getKeys()) {
+            names[pos++] = name;
+        }
+        return new MemberSet(names);
     }
 
-    public CUDAException(String message) {
-        super(message);
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isMemberReadable(@SuppressWarnings("unused") String member) {
+        return true;
     }
 
-    @Override
-    public Node getLocation() {
-        // null = location not available
-        return null;
+    @ExportMessage
+    @TruffleBoundary
+    public Integer readMember(String member) {
+        Integer index = nameList.get(member);
+        if (index == null) {
+            nameList.put(member, index = nameList.size());
+        }
+        return index;
     }
 }

@@ -26,25 +26,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda.functions;
+package com.nvidia.grcuda.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.nvidia.grcuda.GrCUDAContext;
+import com.nvidia.grcuda.GrCUDALanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
 
-public final class ExternalFunction extends Function {
+public abstract class RootNamespaceNode extends ExpressionNode {
 
-    private final Object externalFunction;
-
-    public ExternalFunction(String name, Object externalFunction) {
-        super(name);
-        this.externalFunction = externalFunction;
-    }
-
-    @Override
-    @TruffleBoundary
-    protected Object call(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return INTEROP.execute(externalFunction, arguments);
+    @Specialization
+    protected Object doDefault(
+                    @CachedContext(GrCUDALanguage.class) GrCUDAContext context) {
+        return context.getRootNamespace();
     }
 }

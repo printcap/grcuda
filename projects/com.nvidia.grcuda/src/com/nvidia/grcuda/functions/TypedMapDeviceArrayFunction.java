@@ -28,23 +28,37 @@
  */
 package com.nvidia.grcuda.functions;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.nvidia.grcuda.ElementType;
+import com.nvidia.grcuda.gpu.CUDARuntime;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
-public final class ExternalFunction extends Function {
+/**
+ * Special curried version of the device array mapping function that is specific to a data type.
+ */
+@ExportLibrary(InteropLibrary.class)
+public final class TypedMapDeviceArrayFunction extends Function {
 
-    private final Object externalFunction;
+    private final CUDARuntime runtime;
+    private final ElementType elementType;
 
-    public ExternalFunction(String name, Object externalFunction) {
-        super(name);
-        this.externalFunction = externalFunction;
+    public TypedMapDeviceArrayFunction(CUDARuntime runtime, ElementType elementType) {
+        super("TypedMapDeviceArray");
+        this.runtime = runtime;
+        this.elementType = elementType;
     }
 
-    @Override
-    @TruffleBoundary
-    protected Object call(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return INTEROP.execute(externalFunction, arguments);
+    @ExportMessage
+    public Object execute(Object[] arguments,
+                    @Cached MapArrayNode mapNode) throws ArityException {
+        if (arguments.length != 1) {
+            CompilerDirectives.transferToInterpreter();
+            throw ArityException.create(1, arguments.length);
+        }
+        return mapNode.execute(arguments[0], elementType, runtime);
     }
 }

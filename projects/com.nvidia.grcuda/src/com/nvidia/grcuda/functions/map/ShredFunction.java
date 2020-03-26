@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,25 +25,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.nvidia.grcuda.functions;
+package com.nvidia.grcuda.functions.map;
 
+import com.nvidia.grcuda.functions.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
-public final class ExternalFunction extends Function {
+@ExportLibrary(InteropLibrary.class)
+public final class ShredFunction extends Function {
 
-    private final Object externalFunction;
-
-    public ExternalFunction(String name, Object externalFunction) {
-        super(name);
-        this.externalFunction = externalFunction;
+    public ShredFunction() {
+        super("shred");
     }
 
     @Override
+    @ExportMessage
     @TruffleBoundary
-    protected Object call(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return INTEROP.execute(externalFunction, arguments);
+    public ShreddedObject execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+        MapFunction.checkArity(arguments, 1);
+        return new ShreddedObject(arguments[0]);
     }
 }
